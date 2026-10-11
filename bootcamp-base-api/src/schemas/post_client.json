@@ -1,0 +1,25 @@
+{
+  "title": "PostClient",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "documento": {"type": "string", "pattern": "^\\d{11}$"},
+        "nome": {"type": "string", "minLength": 1, "maxLength": 255},
+        "nascimento": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}
+      },
+      "required": ["documento", "nome", "nascimento"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "documento": {"type": "string", "pattern": "^\\d{14}$"},
+        "nome": {"type": "string", "minLength": 1, "maxLength": 255},
+        "razao_social": {"type": "string", "minLength": 1, "maxLength": 255}
+      },
+      "required": ["documento", "nome", "razao_social"],
+      "additionalProperties": false
+    }
+  ]
+}

@@ -34,3 +34,22 @@ CREATE TABLE sample_entity_status_event(
     event_datetime                  TIMESTAMP NOT NULL,
     created_at                      TIMESTAMP NOT NULL DEFAULT(NOW())
 );
+
+CREATE TABLE client(
+    id                              SERIAL PRIMARY KEY,
+    client_key                      CHAR(36) NOT NULL,
+    client_type                     VARCHAR(2) NOT NULL,
+    document_number                 VARCHAR(14) NOT NULL,
+    name                            VARCHAR(255) NOT NULL,
+    corporate_name                  VARCHAR(255),
+    birthdate                       DATE,
+    created_at                      TIMESTAMP NOT NULL DEFAULT(NOW()),
+    UNIQUE(client_key),
+    UNIQUE(document_number),
+    CHECK(client_type IN ('PF', 'PJ')),
+    CHECK(
+        (client_type = 'PF' AND birthdate IS NOT NULL AND corporate_name IS NULL)
+        OR
+        (client_type = 'PJ' AND birthdate IS NULL AND corporate_name IS NOT NULL)
+    )
+);

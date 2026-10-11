@@ -1,4 +1,5 @@
 CPF_LENGTH = 11
+CNPJ_LENGTH = 14
 
 CHECK_DIGIT_POSITIONS = [9, 10]
 
@@ -58,6 +59,24 @@ def is_valid_cpf(document_number: str) -> bool:
         else:
             expected_digit = 11 - remainder
 
+        if digits[position] != expected_digit:
+            return False
+
+    return True
+
+
+def is_valid_cnpj(document_number: str) -> bool:
+    digits = [int(character) for character in document_number if character.isdigit()]
+
+    if len(digits) != CNPJ_LENGTH or len(set(digits)) == 1:
+        return False
+
+    for position, weights in (
+        (12, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]),
+        (13, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]),
+    ):
+        remainder = sum(digit * weight for digit, weight in zip(digits[:position], weights)) % 11
+        expected_digit = 0 if remainder < 2 else 11 - remainder
         if digits[position] != expected_digit:
             return False
 
