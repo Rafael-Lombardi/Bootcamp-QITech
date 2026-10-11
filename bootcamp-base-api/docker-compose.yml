@@ -39,7 +39,7 @@ services:
       # nesta lista NAO CHEGA no container: o compose repassa o que
       # esta escrito aqui, e mais nada. Sem estas tres linhas, mexer
       # nos BANKSLIP_* do .env nao teria efeito nenhum aqui dentro.
-      BANKSLIP_API_URL: ${BANKSLIP_API_URL:-http://localhost:8080}
+      BANKSLIP_API_URL: ${BANKSLIP_API_URL:-http://bank-slip-fake:8080}
       BANKSLIP_API_INTERNAL_TOKEN: ${BANKSLIP_API_INTERNAL_TOKEN:-default_token}
       BANKSLIP_API_TIMEOUT: ${BANKSLIP_API_TIMEOUT:-5}
     volumes:
@@ -62,6 +62,21 @@ services:
       db:
         condition: service_healthy
 
+  external-bank-fake:
+    build: ./external-bank-fake
+    ports:
+      - "${EXTERNAL_BANK_PORT:-8080}:8080"
+    environment:
+      EXTERNAL_BANK_TOKEN: ${EXTERNAL_BANK_TOKEN:-default_token}
+      EXTERNAL_BANK_DELAY_SECONDS: ${EXTERNAL_BANK_DELAY_SECONDS:-2}
+
+  bank-slip-fake:
+    build: ./bank-slip-fake
+    ports:
+      - "${BANKSLIP_API_PORT:-8081}:8080"
+    environment:
+      BANKSLIP_API_INTERNAL_TOKEN: ${BANKSLIP_API_INTERNAL_TOKEN:-default_token}
+
   db:
     build: ./database/.
     environment:
@@ -77,4 +92,3 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
-

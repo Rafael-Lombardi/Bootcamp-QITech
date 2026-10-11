@@ -32,7 +32,12 @@ class BankSlipConnector(RestConnector):
         )
 
     def create_bank_slip(
-        self, amount: int, expiration_date: str, payer_name: str, payer_document_number: str
+        self,
+        amount: int,
+        expiration_date: str,
+        payer_name: str,
+        payer_document_number: str,
+        beneficiary_data: dict = None,
     ) -> BaseConnectorResponse:
         """Pede a emissão de um boleto.
 
@@ -47,9 +52,27 @@ class BankSlipConnector(RestConnector):
                 "document_number": payer_document_number,
             },
         }
+        if beneficiary_data is not None:
+            payload["beneficiary_data"] = beneficiary_data
 
         return self.send(endpoint="/bank_slip", method="POST", payload=payload)
 
     def get_bank_slip_by_key(self, bank_slip_key: str) -> BaseConnectorResponse:
         """Busca um boleto pela chave. Um 404 na resposta é "não existe"."""
         return self.send(endpoint=f"/bank_slip/{bank_slip_key}", method="GET")
+
+    def pay_bank_slip(
+        self, bank_slip_key: str, idempotency_key: str
+    ) -> BaseConnectorResponse:
+        """Pede o pagamento idempotente de um boleto já consultado.
+
+        O serviço de boletos usa idempotency_key para reconhecer tentativas
+        repetidas sem liquidar o mesmo boleto duas vezes. O identificador
+        externo da liquidação vem na resposta do serviço.
+        """
+        payload = {"idempotency_key": idempotency_key}
+        return self.send(
+            endpoint=f"/bank_slip/{bank_slip_key}/payment",
+            method="POST",
+            payload=payload,
+        )
