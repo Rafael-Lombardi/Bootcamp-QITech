@@ -7,7 +7,10 @@ import requests
 from tests.utils import DbUtils
 
 
-BASE_URL = f"http://{environ.get('SERVER_LOCALHOST', '0.0.0.0')}:3000"
+BASE_URL = (
+    f"http://{environ.get('SERVER_LOCALHOST', '0.0.0.0')}"
+    f":{environ.get('API_PORT', '3000')}"
+)
 HEADERS = {"INTERNAL-TOKEN": environ.get("INTERNAL_TOKEN", "default_token")}
 
 
@@ -36,7 +39,7 @@ class TestClient:
                 "nascimento": adult_birthdate(),
             },
             {
-                "documento": "11111111111111",
+                "documento": "11222333000182",
                 "nome": "Empresa Inválida",
                 "razao_social": "Empresa Inválida LTDA",
             },
@@ -101,3 +104,15 @@ class TestClient:
         assert first == second
         assert conflict_status == 409
         assert conflict["code"] == "QIT001003"
+
+    def test_rejects_unicode_digits(self):
+        payload = {
+            "documento": "٥٢٩٩٨٢٢٤٧٢٥",
+            "nome": "Pessoa Inválida",
+            "nascimento": adult_birthdate(),
+        }
+
+        status, response = request("POST", "/cliente", payload)
+
+        assert status == 400
+        assert response["code"] == "QIT000001"
