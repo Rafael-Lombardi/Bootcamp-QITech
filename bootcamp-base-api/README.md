@@ -222,7 +222,7 @@ Repita o comando 2: o `status` virou `success`. E rode este comando 5
 mais uma vez — agora a API recusa:
 
 ```json
-{"title":"Entity cannot change status","description":"Entity with status success cannot update to success.","translation":"Essa entidade não pode ser atualizada.","code":"QIT001002"}
+{"title":"Entity cannot change status","description":"Entity with status success cannot update to success.","translation":"Essa entidade não pode ser atualizada.","code":"QIT009002"}
 ```
 
 Isso é uma **regra de negócio**, não um erro de digitação: entidade que
@@ -267,7 +267,7 @@ curl -X POST http://localhost:3000/sample_entity \
 ```
 
 ```json
-{"title":"Invalid Document Number","description":"The document number 111.111.111-11 is not a valid CPF.","translation":"O CPF informado não é válido.","code":"QIT001003"}
+{"title":"Invalid Document Number","description":"The document number 111.111.111-11 is not a valid CPF.","translation":"O CPF informado não é válido.","code":"QIT009003"}
 ```
 
 Agora é **422**, não 400. A diferença não é capricho: 400 quer dizer
@@ -659,13 +659,13 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT000404` | essa rota não existe                             |
 | `QIT000405` | a rota existe, mas não aceita esse método        |
 | `QIT000500` | erro inesperado (o time é avisado)               |
-| `QIT001001` | a entidade procurada não existe                  |
-| `QIT001002` | a entidade já está num status final              |
-| `QIT001003` | o CPF tem o formato certo, mas não é um CPF      |
-| `QIT001004` | já existe um cadastro com esse CPF               |
-| `QIT001005` | já existe um cadastro com esse e-mail            |
-| `QIT001006` | a pessoa é menor de idade                        |
-| `QIT001007` | a data de nascimento não existe no calendário    |
+| `QIT009001` | a entidade procurada não existe                  |
+| `QIT009002` | a entidade já está num status final              |
+| `QIT009003` | o CPF tem o formato certo, mas não é um CPF      |
+| `QIT009004` | já existe um cadastro com esse CPF               |
+| `QIT009005` | já existe um cadastro com esse e-mail            |
+| `QIT009006` | a pessoa é menor de idade                        |
+| `QIT009007` | a data de nascimento não existe no calendário    |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.

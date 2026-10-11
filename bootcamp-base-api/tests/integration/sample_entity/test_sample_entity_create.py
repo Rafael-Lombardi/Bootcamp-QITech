@@ -105,7 +105,7 @@ class TestSampleEntityCreate:
 
             status, response = RequestGenerator.POST_sample_entity(payload)
             assert status == 422
-            assert response["code"] == "QIT001007"
+            assert response["code"] == "QIT009007"
 
     def test_refuses_invalid_document_number(self):
         """CPF com a mascara certa e os digitos errados nao passa.
@@ -122,7 +122,7 @@ class TestSampleEntityCreate:
         status, response = RequestGenerator.POST_sample_entity(payload)
 
         assert status == 422
-        assert response["code"] == "QIT001003"
+        assert response["code"] == "QIT009003"
 
     def test_refuses_duplicated_document_number(self):
         primeira = PayloadGenerator.create_sample_entity_payload()
@@ -135,7 +135,7 @@ class TestSampleEntityCreate:
         status, response = RequestGenerator.POST_sample_entity(segunda)
 
         assert status == 409
-        assert response["code"] == "QIT001004"
+        assert response["code"] == "QIT009004"
 
     def test_refuses_duplicated_email(self):
         primeira = PayloadGenerator.create_sample_entity_payload()
@@ -148,7 +148,7 @@ class TestSampleEntityCreate:
         status, response = RequestGenerator.POST_sample_entity(segunda)
 
         assert status == 409
-        assert response["code"] == "QIT001005"
+        assert response["code"] == "QIT009005"
 
     def test_refuses_underage(self):
         payload = PayloadGenerator.create_sample_entity_payload()
@@ -157,7 +157,7 @@ class TestSampleEntityCreate:
         status, response = RequestGenerator.POST_sample_entity(payload)
 
         assert status == 422
-        assert response["code"] == "QIT001006"
+        assert response["code"] == "QIT009006"
 
     def test_over_eighty_is_created_as_failed(self):
         """Passar de oitenta nao e erro: e outro desfecho.

@@ -2,7 +2,7 @@ from errors import QIException
 
 
 class NotFoundSampleEntity(QIException):
-    code = "QIT001001"
+    code = "QIT009001"
 
     def __init__(self, sample_entity_key) -> None:
         title = "Entity not Found"
@@ -13,7 +13,7 @@ class NotFoundSampleEntity(QIException):
 
 
 class SampleEntityFinalStatus(QIException):
-    code = "QIT001002"
+    code = "QIT009002"
 
     def __init__(self, old_status, new_status) -> None:
         title = "Entity cannot change status"
@@ -32,7 +32,7 @@ class InvalidDocumentNumber(QIException):
     explicada em src/utils/document_number.py.
     """
 
-    code = "QIT001003"
+    code = "QIT009003"
 
     def __init__(self, document_number) -> None:
         title = "Invalid Document Number"
@@ -50,7 +50,7 @@ class DuplicatedDocumentNumber(QIException):
     cima — conflito com o que já existe, não erro de quem pediu.
     """
 
-    code = "QIT001004"
+    code = "QIT009004"
 
     def __init__(self, document_number) -> None:
         title = "Document Number already registered"
@@ -61,7 +61,7 @@ class DuplicatedDocumentNumber(QIException):
 
 
 class DuplicatedEmail(QIException):
-    code = "QIT001005"
+    code = "QIT009005"
 
     def __init__(self, email) -> None:
         title = "Email already registered"
@@ -72,7 +72,7 @@ class DuplicatedEmail(QIException):
 
 
 class UnderageSampleEntity(QIException):
-    code = "QIT001006"
+    code = "QIT009006"
 
     def __init__(self, age, minimum_age) -> None:
         title = "Entity is underage"
@@ -91,7 +91,7 @@ class InvalidBirthdate(QIException):
     a API culpando a si mesma por um erro de quem chamou.
     """
 
-    code = "QIT001007"
+    code = "QIT009007"
 
     def __init__(self, birthdate) -> None:
         title = "Invalid Birthdate"
