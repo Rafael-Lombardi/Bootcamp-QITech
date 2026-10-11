@@ -1,6 +1,6 @@
 import unittest
 
-from app import (
+from external_bank_fake import (
     Account,
     AdminTransactionRequest,
     TransactionRequest,

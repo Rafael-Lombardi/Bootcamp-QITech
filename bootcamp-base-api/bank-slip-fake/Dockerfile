@@ -6,9 +6,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
+COPY bank_slip_fake.py .
 
 USER user
 EXPOSE 8080
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--no-server-header"]
+CMD ["uvicorn", "bank_slip_fake:app", "--host", "0.0.0.0", "--port", "8080", "--no-server-header"]

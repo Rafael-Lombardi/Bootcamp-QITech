@@ -1,7 +1,10 @@
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
-from app import (
+from fastapi import HTTPException
+
+from bank_slip_fake import (
     BeneficiaryData,
     CreateBankSlipRequest,
     PartyData,
@@ -42,6 +45,32 @@ class BankSlipFakeTest(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(bank_slip["beneficiary_data"]["account"], 20)
         self.assertEqual(bank_slip["status"], "PAID")
+
+    def test_concurrent_payments_settle_only_once(self):
+        bank_slip = create_bank_slip(
+            CreateBankSlipRequest(
+                amount=15000,
+                expiration_date=date.today() + timedelta(days=1),
+                payer_data=PartyData(name="Pagador", document_number="123"),
+            ),
+            "default_token",
+        )
+
+        def pay(idempotency_key):
+            try:
+                return pay_bank_slip(
+                    bank_slip["bank_slip_key"],
+                    PayBankSlipRequest(idempotency_key=idempotency_key),
+                    "default_token",
+                )["status"]
+            except HTTPException as error:
+                return error.status_code
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(pay, ["idem-1", "idem-2"]))
+
+        self.assertCountEqual(results, ["SETTLED", 409])
+        self.assertEqual(len(payments), 1)
 
 
 if __name__ == "__main__":

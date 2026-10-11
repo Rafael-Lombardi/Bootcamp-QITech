@@ -35,11 +35,9 @@ services:
       # A senha que protege os endpoints internos. O padrao vale pra
       # estudar; num sistema de verdade, isso nunca teria valor padrao.
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:-default_token}
-      # A API de boletos (assunto do sabado 4). Variavel que nao esta
-      # nesta lista NAO CHEGA no container: o compose repassa o que
-      # esta escrito aqui, e mais nada. Sem estas tres linhas, mexer
-      # nos BANKSLIP_* do .env nao teria efeito nenhum aqui dentro.
-      BANKSLIP_API_URL: ${BANKSLIP_API_URL:-http://bank-slip-fake:8080}
+      # Dentro do Compose, servicos se encontram pelo nome. Nao use a
+      # BANKSLIP_API_URL do .env: localhost aqui apontaria para a propria API.
+      BANKSLIP_API_URL: http://bank-slip-fake:8080
       BANKSLIP_API_INTERNAL_TOKEN: ${BANKSLIP_API_INTERNAL_TOKEN:-default_token}
       BANKSLIP_API_TIMEOUT: ${BANKSLIP_API_TIMEOUT:-5}
     volumes:

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 TOKEN = os.environ.get("EXTERNAL_BANK_TOKEN", "default_token")
 DELAY_SECONDS = float(os.environ.get("EXTERNAL_BANK_DELAY_SECONDS", "2"))
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="External Bank Fake", docs_url=None, redoc_url=None, openapi_url=None)
 
 
 class Account(BaseModel):

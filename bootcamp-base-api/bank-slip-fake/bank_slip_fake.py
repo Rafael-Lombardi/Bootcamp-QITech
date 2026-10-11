@@ -1,6 +1,6 @@
 import os
 from datetime import date
-from typing import Literal
+from threading import Lock
 from uuid import uuid4
 
 from fastapi import FastAPI, Header, HTTPException, Response, status
@@ -36,6 +36,7 @@ class PayBankSlipRequest(BaseModel):
 
 bank_slips: dict[str, dict] = {}
 payments: dict[str, dict] = {}
+payment_lock = Lock()
 
 
 def require_token(internal_token: str | None) -> None:
@@ -89,23 +90,24 @@ def pay_bank_slip(
     internal_token: str | None = Header(default=None, alias="INTERNAL-TOKEN"),
 ):
     require_token(internal_token)
-    bank_slip = current_bank_slip(bank_slip_key)
-    previous_payment = payments.get(payload.idempotency_key)
+    with payment_lock:
+        bank_slip = current_bank_slip(bank_slip_key)
+        previous_payment = payments.get(payload.idempotency_key)
 
-    if previous_payment is not None:
-        if previous_payment["bank_slip_key"] != bank_slip_key:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Idempotency key already used")
-        return previous_payment
+        if previous_payment is not None:
+            if previous_payment["bank_slip_key"] != bank_slip_key:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Idempotency key already used")
+            return previous_payment
 
-    if bank_slip["status"] != "OPEN":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Bank slip is {bank_slip['status']}")
+        if bank_slip["status"] != "OPEN":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Bank slip is {bank_slip['status']}")
 
-    payment = {
-        "bank_slip_key": bank_slip_key,
-        "external_transaction_id": str(uuid4()),
-        "status": "SETTLED",
-    }
-    payments[payload.idempotency_key] = payment
-    bank_slip["status"] = "PAID"
-    bank_slip["external_transaction_id"] = payment["external_transaction_id"]
-    return payment
+        payment = {
+            "bank_slip_key": bank_slip_key,
+            "external_transaction_id": str(uuid4()),
+            "status": "SETTLED",
+        }
+        payments[payload.idempotency_key] = payment
+        bank_slip["status"] = "PAID"
+        bank_slip["external_transaction_id"] = payment["external_transaction_id"]
+        return payment
