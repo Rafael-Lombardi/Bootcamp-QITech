@@ -25,9 +25,12 @@ def is_valid_cpf(document_number: str) -> bool:
     por 11. Resto menor que 2 vira dígito 0; nos outros casos, o dígito é
     11 menos o resto.
     """
+    if any(character.isdigit() and not character.isascii() for character in document_number):
+        return False
+
     digits = []
     for character in document_number:
-        if character.isdigit():
+        if character in "0123456789":
             digits.append(int(character))
 
     if len(digits) != CPF_LENGTH:
@@ -66,7 +69,10 @@ def is_valid_cpf(document_number: str) -> bool:
 
 
 def is_valid_cnpj(document_number: str) -> bool:
-    digits = [int(character) for character in document_number if character.isdigit()]
+    if any(character.isdigit() and not character.isascii() for character in document_number):
+        return False
+
+    digits = [int(character) for character in document_number if character in "0123456789"]
 
     if len(digits) != CNPJ_LENGTH or len(set(digits)) == 1:
         return False

@@ -91,7 +91,46 @@ cole um comando de cada vez.
 > 0. No PowerShell estes comandos não funcionam, porque lá `curl` é o
 > apelido de outro programa, com outra sintaxe.
 
-#### 1. Criar uma entidade
+#### 1. Criar um cliente
+
+Pessoa física:
+
+```bash
+curl -X POST http://localhost:3000/cliente \
+  -H "INTERNAL-TOKEN: default_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "documento": "52998224725",
+    "nome": "Maria da Silva",
+    "nascimento": "1990-05-17"
+  }'
+```
+
+```json
+{"chave_cliente":"3fbf83e9-e5fc-4e0f-8427-db6a1a50f964"}
+```
+
+#### 2. Buscar o cliente
+
+```bash
+curl http://localhost:3000/cliente/3fbf83e9-e5fc-4e0f-8427-db6a1a50f964 \
+  -H "INTERNAL-TOKEN: default_token"
+```
+
+```json
+{"chave_cliente":"3fbf83e9-e5fc-4e0f-8427-db6a1a50f964","tipo":"PF","documento":"52998224725","nome":"Maria da Silva","nascimento":"1990-05-17","contas":[]}
+```
+
+Repetir o cadastro com os mesmos dados retorna `200` e a mesma chave.
+Usar o mesmo documento com dados diferentes retorna `409 QIT001003`.
+
+#### Exemplo legado do projeto base
+
+O restante desta seção explica as camadas usando `SampleEntity`, código
+didático preservado como referência. Suas rotas estão desativadas e não
+fazem parte do contrato atual da API.
+
+##### Criar uma entidade no exemplo legado
 
 ```bash
 curl -X POST http://localhost:3000/sample_entity \
@@ -341,21 +380,18 @@ lições de segurança que cabem em cinco linhas.
 > quase só isso. Eles ganham o `x-request-id` como todo mundo — o que
 > não ganham é a linha de log.
 
-### Todas as rotas
+### Todas as rotas ativas
 
-Sete endereços — este é o mapa inteiro da API:
+Este é o mapa atual da API:
 
 | Método e rota | O que faz | Responde |
 |---|---|---|
 | `GET /` | diz qual serviço é este | `200` + nome e id |
 | `GET /health_check` | diz se a API está de pé | `204`, sem corpo |
-| `POST /sample_entity` | cria uma entidade | `201` + o `sample_entity_key` |
-| `GET /sample_entity/{key}` | busca uma entidade | `200` + a entidade |
-| `GET /sample_entities` | lista, de dez em dez, com filtros | `200` + a página |
-| `PUT /sample_entity/{key}` | muda o status (`success` ou `failed`) | `202` + o `sample_entity_key` |
-| `PUT /webhook/sample_entity/{key}/increment_counter` | soma 1 no contador | `204`, sem corpo |
+| `POST /cliente` | cadastra PF ou PJ | `201` ao criar; `200` ao repetir os mesmos dados |
+| `GET /cliente/{chave_cliente}` | busca cliente e suas contas | `200` + o cliente |
 
-As cinco de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
+As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
 são abertas — a primeira você já usou: foi ela que respondeu no
 navegador.
 
@@ -659,13 +695,10 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT000404` | essa rota não existe                             |
 | `QIT000405` | a rota existe, mas não aceita esse método        |
 | `QIT000500` | erro inesperado (o time é avisado)               |
-| `QIT009001` | a entidade procurada não existe                  |
-| `QIT009002` | a entidade já está num status final              |
-| `QIT009003` | o CPF tem o formato certo, mas não é um CPF      |
-| `QIT009004` | já existe um cadastro com esse CPF               |
-| `QIT009005` | já existe um cadastro com esse e-mail            |
-| `QIT009006` | a pessoa é menor de idade                        |
-| `QIT009007` | a data de nascimento não existe no calendário    |
+| `QIT001001` | o cliente procurado não existe                   |
+| `QIT001002` | CPF ou CNPJ tem dígitos verificadores inválidos  |
+| `QIT001003` | documento já cadastrado com dados diferentes     |
+| `QIT001004` | a pessoa física é menor de 18 anos               |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.
@@ -675,9 +708,10 @@ Os números não são sorteados. Eles vêm em duas faixas:
 - **`QIT000…`** — os erros que **toda** API tem: JSON errado, sem token,
   rota inexistente. Estão em `src/errors/base_error.py` e você não
   precisa mexer neles.
-- **`QIT001…`** — os erros das **regras deste projeto**. Estão em
-  `src/errors/custom_errors.py`, e é aí que os seus entram: o próximo
-  livre é o `QIT001008`.
+- **`QIT001…`** — os erros das **regras deste projeto**. Os erros ativos
+  de cliente estão em `src/errors/client_errors.py`; novos códigos devem
+  seguir o RFC, porque as faixas seguintes já estão reservadas para
+  conta e transação.
 
 Não repita um número. Se repetir, a API **não sobe** — tem uma checagem
 no start (`error_verification`, em `src/errors/base_error.py`) que
