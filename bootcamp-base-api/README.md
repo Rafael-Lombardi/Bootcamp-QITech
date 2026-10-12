@@ -393,11 +393,26 @@ Este é o mapa atual da API:
 | `POST /cliente/{chave_cliente}/conta` | abre conta `PENDENTE` | `201` ao criar; `200` ao repetir agência e número do mesmo cliente |
 | `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
 | `PATCH /conta/{chave_conta}` | altera estado da conta; desativação exige saldo zero e nenhuma transação em andamento | `200` + a conta |
-| `POST /transacao` | transfere via PIX ou TED entre contas internas | `201` ao criar; `200` ao repetir a mesma chave de idempotência |
+| `POST /transacao` | transfere via PIX ou TED entre contas internas ou para banco externo | `201` ao criar; `200` ao repetir a mesma chave de idempotência |
 
 As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
 são abertas — a primeira você já usou: foi ela que respondeu no
 navegador.
+
+Quando `destinatario.banco_id` é diferente de `1`, a API consulta o
+`external-bank-fake` antes de criar uma transação `EM_ANDAMENTO`. A chamada
+ao banco externo acontece sem segurar lock local. Resposta `SETTLED` cria o
+movimento no extrato; `REJECTED` salva `FALHOU`; timeout deixa a transação em
+andamento e repetir a mesma chave reconcilia pelo identificador externo.
+
+### Decisão de projeto: chave de idempotência
+
+O chamador é responsável por persistir e reutilizar a mesma chave de
+idempotência quando uma resposta se perde ou ocorre timeout. A API também
+persiste essa chave, associa-a à transação e rejeita o reuso com payload
+incompatível. Isso deixa a identidade da operação explícita e torna o retry
+determinístico: chave igual retoma a transação existente; chave diferente é
+uma nova operação. Não há retry automático em background nesta versão.
 
 Os parâmetros da listagem, todos opcionais e combináveis:
 `?limit=` (padrão 10, teto 100) · `?page=` (padrão 0) · `?status=`
@@ -710,8 +725,12 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001010` | conta tem transação em andamento ao desativar   |
 | `QIT001013` | a conta remetente não existe                     |
 | `QIT001014` | a conta destinatária não existe                  |
+| `QIT001015` | a conta destinatária externa não existe          |
 | `QIT001016` | a conta remetente não está ativa                 |
 | `QIT001017` | a conta destinatária não está disponível         |
+| `QIT001018` | a conta destinatária externa não está disponível |
+| `QIT001019` | o banco externo rejeitou a transação             |
+| `QIT001020` | o banco externo não respondeu a tempo             |
 | `QIT001021` | saldo menor que valor mais tarifa                |
 | `QIT001022` | chave de idempotência já usada                   |
 | `QIT001023` | remetente e destinatário são a mesma conta       |

@@ -26,6 +26,11 @@ BANKSLIP_API_INTERNAL_TOKEN = os.environ.get("BANKSLIP_API_INTERNAL_TOKEN", "def
 # Todo connector TEM um timeout — o porquê está em
 # src/connectors/rest_connector.py.
 BANKSLIP_API_TIMEOUT = int(os.environ.get("BANKSLIP_API_TIMEOUT", "5"))
+EXTERNAL_BANK_API_URL = os.environ.get("EXTERNAL_BANK_API_URL", "http://localhost:8080")
+EXTERNAL_BANK_API_INTERNAL_TOKEN = os.environ.get(
+    "EXTERNAL_BANK_API_INTERNAL_TOKEN", "default_token"
+)
+EXTERNAL_BANK_API_TIMEOUT = int(os.environ.get("EXTERNAL_BANK_API_TIMEOUT", "1"))
 BANK_ID = int(os.environ.get("BANK_ID", "1"))
 
 # Rotas públicas: não exigem o header INTERNAL-TOKEN. São as duas que

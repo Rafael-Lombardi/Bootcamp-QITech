@@ -45,6 +45,19 @@ class AccountRepository:
             .first()
         )
 
+    def get_by_identity_for_update(self, bank_id: int, branch: int, number: int) -> Account:
+        return (
+            self.session.query(Account)
+            .filter(
+                Account.bank_id == bank_id,
+                Account.branch == branch,
+                Account.number == number,
+            )
+            .populate_existing()
+            .with_for_update()
+            .first()
+        )
+
     def count_open_by_client(self, client_id: int) -> int:
         return (
             self.session.query(Account)

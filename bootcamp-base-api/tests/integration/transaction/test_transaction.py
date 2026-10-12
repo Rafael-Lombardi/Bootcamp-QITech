@@ -53,7 +53,90 @@ def transfer(sender_key: str, recipient_number: int, amount: int, channel: str =
     )
 
 
+def external_transfer(
+    sender_key: str,
+    recipient_number: int,
+    amount: int,
+    channel: str = "PIX",
+    idempotency_key: str = None,
+):
+    return request(
+        "POST",
+        "/transacao",
+        {
+            "remetente": sender_key,
+            "destinatario": {"banco_id": 2, "agencia": 1, "conta": recipient_number},
+            "valor": amount,
+            "canal": channel,
+        },
+        headers={"chave_de_idempotencia": idempotency_key or str(uuid4())},
+    )
+
+
 class TestTransaction:
+    def test_external_pix_settles_after_fake_bank_response(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(15, "ExternalSender"), 15)
+        activate_accounts(sender_key)
+
+        status, response = external_transfer(sender_key, 1234, 1000)
+
+        assert status == 201
+        assert response["estado"] == "CONCLUIDA"
+        assert request("GET", f"/conta/{sender_key}")[1]["saldo"] == "10.00"
+
+        engine = create_engine(DbUtils.database_url())
+        with engine.connect() as connection:
+            movements = connection.execute(text("SELECT movement_cents FROM account_entry")).scalars().all()
+            external_id = connection.execute(
+                text("SELECT external_transaction_id FROM bank_transaction")
+            ).scalar_one()
+        assert movements == [-1000]
+        assert external_id
+
+    def test_external_rejection_fails_without_ledger_entry(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(16, "ExternalReject"), 16)
+        activate_accounts(sender_key)
+
+        status, response = external_transfer(sender_key, 9999, 100)
+
+        assert status == 422
+        assert response["code"] == "QIT001019"
+        assert request("GET", f"/conta/{sender_key}")[1]["saldo"] == "20.00"
+
+        engine = create_engine(DbUtils.database_url())
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT count(*) FROM account_entry")).scalar_one() == 0
+
+    def test_external_recipient_validation_maps_fake_bank_states(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(17, "ExternalValidation"), 17)
+        activate_accounts(sender_key)
+
+        status, response = external_transfer(sender_key, 10000, 100)
+        assert status == 404
+        assert response["code"] == "QIT001015"
+
+        status, response = external_transfer(sender_key, 6666, 100)
+        assert status == 409
+        assert response["code"] == "QIT001018"
+
+    def test_external_timeout_stays_pending_and_retry_reconciles(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(18, "ExternalTimeout"), 18)
+        activate_accounts(sender_key)
+        idempotency_key = str(uuid4())
+
+        status, response = external_transfer(sender_key, 7777, 100, idempotency_key=idempotency_key)
+        assert status == 504
+        assert response["code"] == "QIT001020"
+
+        status, response = external_transfer(sender_key, 7777, 100, idempotency_key=idempotency_key)
+        assert status == 200
+        assert response["estado"] == "CONCLUIDA"
+        assert request("GET", f"/conta/{sender_key}")[1]["saldo"] == "19.00"
+
     def test_internal_pix_creates_signed_entries_and_moves_balances(self):
         DbUtils.rollback()
         sender_client = create_client(1, "Sender")

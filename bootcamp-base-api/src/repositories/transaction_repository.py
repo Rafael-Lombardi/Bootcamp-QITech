@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from database import Context
+from sqlalchemy import func
 from models import LedgerEntry, Transaction, TransactionChannel, TransactionStatus
 
 
@@ -15,6 +16,35 @@ class TransactionRepository:
             .first()
         )
 
+    def get_by_transaction_key_for_update(self, transaction_key: str) -> Transaction:
+        return (
+            self.session.query(Transaction)
+            .filter(Transaction.transaction_key == transaction_key)
+            .populate_existing()
+            .with_for_update()
+            .first()
+        )
+
+    def get_pending_outgoing_cents(
+        self,
+        sender_endpoint: dict,
+        exclude_transaction_id: int = None,
+    ) -> int:
+        query = (
+            self.session.query(
+                func.coalesce(func.sum(Transaction.amount_cents + Transaction.fee_cents), 0)
+            )
+            .filter(
+                Transaction.sender_bank_id == sender_endpoint["bank_id"],
+                Transaction.sender_branch == sender_endpoint["branch"],
+                Transaction.sender_number == sender_endpoint["number"],
+                Transaction.status == TransactionStatus.EM_ANDAMENTO,
+            )
+        )
+        if exclude_transaction_id is not None:
+            query = query.filter(Transaction.id != exclude_transaction_id)
+        return int(query.scalar() or 0)
+
     def create(
         self,
         idempotency_key: str,
@@ -23,9 +53,11 @@ class TransactionRepository:
         amount_cents: int,
         fee_cents: int,
         channel: TransactionChannel,
+        status: TransactionStatus = TransactionStatus.CONCLUIDA,
     ) -> Transaction:
+        transaction_key = str(uuid4())
         transaction = Transaction(
-            transaction_key=str(uuid4()),
+            transaction_key=transaction_key,
             idempotency_key=idempotency_key,
             sender_bank_id=sender_endpoint["bank_id"],
             sender_branch=sender_endpoint["branch"],
@@ -36,7 +68,7 @@ class TransactionRepository:
             amount_cents=amount_cents,
             fee_cents=fee_cents,
             channel=channel,
-            status=TransactionStatus.CONCLUIDA,
+            status=status,
         )
         self.session.add(transaction)
         return transaction

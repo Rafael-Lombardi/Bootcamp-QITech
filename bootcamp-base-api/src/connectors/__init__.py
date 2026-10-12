@@ -1,1 +1,2 @@
 from connectors.bankslip_connector import BankSlipConnector
+from connectors.external_bank_connector import ExternalBankConnector
