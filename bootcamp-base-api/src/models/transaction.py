@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, BigInteger, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from models.base import Base
@@ -12,8 +12,12 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True)
     transaction_key = Column(String(36), nullable=False)
     idempotency_key = Column(String(36), nullable=False)
-    sender_account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    recipient_account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
+    sender_bank_id = Column(Integer, nullable=False)
+    sender_branch = Column(Integer, nullable=False)
+    sender_number = Column(Integer, nullable=False)
+    recipient_bank_id = Column(Integer, nullable=False)
+    recipient_branch = Column(Integer, nullable=False)
+    recipient_number = Column(Integer, nullable=False)
     amount_cents = Column(BigInteger, nullable=False)
     fee_cents = Column(BigInteger, nullable=False, server_default="0")
     channel = Column(
@@ -43,6 +47,4 @@ class Transaction(Base):
         UniqueConstraint("idempotency_key"),
     )
 
-    sender_account = relationship("Account", foreign_keys=[sender_account_id])
-    recipient_account = relationship("Account", foreign_keys=[recipient_account_id])
     entries = relationship("LedgerEntry", back_populates="transaction")

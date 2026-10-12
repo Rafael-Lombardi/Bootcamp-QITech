@@ -87,7 +87,17 @@ class TestTransaction:
         engine = create_engine(DbUtils.database_url())
         with engine.connect() as connection:
             movements = connection.execute(text("SELECT movement_cents FROM account_entry ORDER BY id")).scalars().all()
+            endpoints = connection.execute(
+                text(
+                    """
+                    SELECT sender_bank_id, sender_branch, sender_number,
+                           recipient_bank_id, recipient_branch, recipient_number
+                    FROM bank_transaction
+                    """
+                )
+            ).one()
         assert movements == [-1000, 1000]
+        assert endpoints == (1, 1234, 1, 1, 1234, 2)
 
     def test_internal_ted_charges_sender_fee(self):
         DbUtils.rollback()

@@ -51,7 +51,7 @@ class TransactionController(BaseController):
 
         existing = self.transaction_repository.get_by_idempotency_key(idempotency_key)
         if existing is not None:
-            if self._same_request(existing, sender.id, recipient.id, amount_cents, channel):
+            if self._same_request(existing, sender, recipient, amount_cents, channel):
                 return TransactionDTO.obj_to_dict(existing), False
             raise IdempotencyKeyConflict()
 
@@ -71,8 +71,8 @@ class TransactionController(BaseController):
 
         transaction = self.transaction_repository.create(
             idempotency_key=idempotency_key,
-            sender_account_id=sender.id,
-            recipient_account_id=recipient.id,
+            sender_endpoint=self._endpoint(sender),
+            recipient_endpoint=self._endpoint(recipient),
             amount_cents=amount_cents,
             fee_cents=fee_cents,
             channel=channel,
@@ -89,7 +89,7 @@ class TransactionController(BaseController):
             existing = self.transaction_repository.get_by_idempotency_key(idempotency_key)
             if existing is None:
                 raise
-            if self._same_request(existing, sender.id, recipient.id, amount_cents, channel):
+            if self._same_request(existing, sender, recipient, amount_cents, channel):
                 return TransactionDTO.obj_to_dict(existing), False
             raise IdempotencyKeyConflict()
 
@@ -111,10 +111,20 @@ class TransactionController(BaseController):
         return min((amount_cents * 5 + 500) // 1000, 1000)
 
     @staticmethod
-    def _same_request(transaction, sender_id: int, recipient_id: int, amount_cents: int, channel) -> bool:
+    def _same_request(transaction, sender, recipient, amount_cents: int, channel) -> bool:
         return (
-            transaction.sender_account_id == sender_id
-            and transaction.recipient_account_id == recipient_id
+            (transaction.sender_bank_id, transaction.sender_branch, transaction.sender_number)
+            == (sender.bank_id, sender.branch, sender.number)
+            and (transaction.recipient_bank_id, transaction.recipient_branch, transaction.recipient_number)
+            == (recipient.bank_id, recipient.branch, recipient.number)
             and transaction.amount_cents == amount_cents
             and transaction.channel == channel
         )
+
+    @staticmethod
+    def _endpoint(account) -> dict:
+        return {
+            "bank_id": account.bank_id,
+            "branch": account.branch,
+            "number": account.number,
+        }
