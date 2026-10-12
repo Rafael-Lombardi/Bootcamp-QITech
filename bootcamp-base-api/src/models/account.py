@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from models.account_status import AccountStatus
@@ -14,7 +14,7 @@ class Account(Base):
     branch = Column(Integer, nullable=False)
     number = Column(Integer, nullable=False)
     client_id = Column(Integer, ForeignKey("client.id"), nullable=False)
-    balance = Column(Numeric(18, 2), nullable=False, server_default="0.00")
+    balance_cents = Column(BigInteger, nullable=False, server_default="0")
     status = Column(
         Enum(
             AccountStatus,
