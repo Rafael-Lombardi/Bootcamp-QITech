@@ -83,11 +83,29 @@ CREATE TABLE account_status_event(
     CHECK(status IN ('PENDENTE', 'ATIVA', 'BLOQUEADA', 'DESATIVADA'))
 );
 
+CREATE TABLE bank_slip(
+    id                              SERIAL PRIMARY KEY,
+    bank_slip_key                  VARCHAR(255),
+    issuance_idempotency_key       CHAR(36) NOT NULL,
+    beneficiary_account_id         INTEGER NOT NULL REFERENCES account(id),
+    amount_cents                    BIGINT NOT NULL,
+    expiration_date                DATE NOT NULL,
+    payer_name                     VARCHAR(255) NOT NULL,
+    payer_document_number          VARCHAR(14) NOT NULL,
+    status                          VARCHAR(20) NOT NULL,
+    created_at                     TIMESTAMP NOT NULL DEFAULT(NOW()),
+    UNIQUE(bank_slip_key),
+    UNIQUE(issuance_idempotency_key),
+    CHECK(amount_cents > 0),
+    CHECK(status IN ('EM_ANDAMENTO', 'REGISTRADO', 'FALHOU'))
+);
+
 CREATE TABLE bank_transaction(
     id                              SERIAL PRIMARY KEY,
     transaction_key                CHAR(36) NOT NULL,
     idempotency_key                CHAR(36) NOT NULL,
     external_transaction_id        CHAR(36),
+    bank_slip_key                  VARCHAR(255),
     sender_bank_id                 INTEGER NOT NULL,
     sender_branch                  INTEGER NOT NULL,
     sender_number                  INTEGER NOT NULL,
@@ -102,6 +120,7 @@ CREATE TABLE bank_transaction(
     UNIQUE(transaction_key),
     UNIQUE(idempotency_key),
     UNIQUE(external_transaction_id),
+    UNIQUE(bank_slip_key),
     CHECK(amount_cents > 0),
     CHECK(fee_cents >= 0),
     CHECK(sender_bank_id > 0),
@@ -110,7 +129,7 @@ CREATE TABLE bank_transaction(
     CHECK(recipient_bank_id > 0),
     CHECK(recipient_branch > 0),
     CHECK(recipient_number > 0),
-    CHECK(channel IN ('PIX', 'TED')),
+    CHECK(channel IN ('PIX', 'TED', 'BOLETO')),
     CHECK(status IN ('CONCLUIDA', 'EM_ANDAMENTO', 'CANCELADA', 'FALHOU'))
 );
 

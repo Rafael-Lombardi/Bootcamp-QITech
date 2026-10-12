@@ -13,6 +13,7 @@ class Transaction(Base):
     transaction_key = Column(String(36), nullable=False)
     idempotency_key = Column(String(36), nullable=False)
     external_transaction_id = Column(String(36), nullable=True)
+    bank_slip_key = Column(String(255), nullable=True)
     sender_bank_id = Column(Integer, nullable=False)
     sender_branch = Column(Integer, nullable=False)
     sender_number = Column(Integer, nullable=False)
@@ -47,6 +48,7 @@ class Transaction(Base):
         UniqueConstraint("transaction_key"),
         UniqueConstraint("idempotency_key"),
         UniqueConstraint("external_transaction_id"),
+        UniqueConstraint("bank_slip_key"),
     )
 
     entries = relationship("LedgerEntry", back_populates="transaction")

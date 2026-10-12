@@ -9,7 +9,13 @@ from middlewares import (
     register_request_logger_middleware,
     register_session_manager_middleware,
 )
-from resources import AccountResource, ClientResource, HealthCheckResource, TransactionResource
+from resources import (
+    AccountResource,
+    BankSlipResource,
+    ClientResource,
+    HealthCheckResource,
+    TransactionResource,
+)
 from utils.logger import setup_logging
 
 
@@ -126,6 +132,7 @@ def create_app() -> FastAPI:
     client_resource = ClientResource()
     account_resource = AccountResource()
     transaction_resource = TransactionResource()
+    bank_slip_resource = BankSlipResource()
 
     application.add_api_route("/", health_check_resource.on_get_home, methods=["GET"])
     application.add_api_route(
@@ -162,6 +169,16 @@ def create_app() -> FastAPI:
     application.add_api_route(
         "/transacao",
         transaction_resource.on_post,
+        methods=["POST"],
+    )
+    application.add_api_route(
+        "/boleto",
+        bank_slip_resource.on_post,
+        methods=["POST"],
+    )
+    application.add_api_route(
+        "/boleto/{bank_slip_key}/pagamento",
+        bank_slip_resource.on_post_payment,
         methods=["POST"],
     )
 

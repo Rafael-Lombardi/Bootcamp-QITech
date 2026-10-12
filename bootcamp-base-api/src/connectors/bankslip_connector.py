@@ -38,6 +38,7 @@ class BankSlipConnector(RestConnector):
         payer_name: str,
         payer_document_number: str,
         beneficiary_data: dict = None,
+        idempotency_key: str = None,
     ) -> BaseConnectorResponse:
         """Pede a emissão de um boleto.
 
@@ -47,6 +48,7 @@ class BankSlipConnector(RestConnector):
         payload = {
             "amount": amount,
             "expiration_date": expiration_date,
+            "idempotency_key": idempotency_key,
             "payer_data": {
                 "name": payer_name,
                 "document_number": payer_document_number,

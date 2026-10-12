@@ -1,0 +1,9 @@
+{
+  "title": "PostBankSlipPayment",
+  "type": "object",
+  "properties": {
+    "pagador": {"type": "string", "minLength": 1}
+  },
+  "required": ["pagador"],
+  "additionalProperties": false
+}

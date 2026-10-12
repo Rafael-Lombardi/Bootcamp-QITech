@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import date
 from threading import Lock
 from uuid import uuid4
@@ -26,6 +27,7 @@ class BeneficiaryData(PartyData):
 class CreateBankSlipRequest(BaseModel):
     amount: int = Field(gt=0)
     expiration_date: date
+    idempotency_key: str | None = None
     payer_data: PartyData
     beneficiary_data: BeneficiaryData | None = None
 
@@ -36,7 +38,50 @@ class PayBankSlipRequest(BaseModel):
 
 bank_slips: dict[str, dict] = {}
 payments: dict[str, dict] = {}
+issuances: dict[str, str] = {}
 payment_lock = Lock()
+
+
+def fixture(
+    bank_slip_key: str,
+    amount: int,
+    expiration_date: str,
+    status: str = "OPEN",
+    external_transaction_id: str | None = None,
+) -> dict:
+    bank_slip = {
+        "bank_slip_key": bank_slip_key,
+        "amount": amount,
+        "expiration_date": expiration_date,
+        "payer_data": {"name": "Fixture Payer", "document_number": "52998224725"},
+        "beneficiary_data": {
+            "name": "External Beneficiary",
+            "document_number": "11222333000181",
+            "bank_code": 2,
+            "branch": 1,
+            "account": 9000,
+        },
+        "status": status,
+    }
+    if external_transaction_id:
+        bank_slip["external_transaction_id"] = external_transaction_id
+    return bank_slip
+
+
+bank_slips.update(
+    {
+        "fixture-external-open": fixture(
+            "fixture-external-open", 1000, "2099-12-31"
+        ),
+        "fixture-external-timeout": fixture(
+            "fixture-external-timeout", 750, "2099-12-31"
+        ),
+        "fixture-expired": fixture("fixture-expired", 500, "2000-01-01"),
+        "fixture-paid": fixture(
+            "fixture-paid", 600, "2099-12-31", "PAID", "fixture-payment-paid"
+        ),
+    }
+)
 
 
 def require_token(internal_token: str | None) -> None:
@@ -64,13 +109,30 @@ def create_bank_slip(
     internal_token: str | None = Header(default=None, alias="INTERNAL-TOKEN"),
 ):
     require_token(internal_token)
+    if payload.idempotency_key:
+        previous_key = issuances.get(payload.idempotency_key)
+        if previous_key is not None:
+            previous = bank_slips[previous_key]
+            if (
+                previous["amount"] != payload.amount
+                or previous["expiration_date"] != payload.expiration_date.isoformat()
+                or previous["payer_data"] != payload.payer_data.model_dump(mode="json")
+                or previous.get("beneficiary_data")
+                != (payload.beneficiary_data.model_dump(mode="json") if payload.beneficiary_data else None)
+            ):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Idempotency key already used")
+            return previous
+
     bank_slip_key = str(uuid4())
     bank_slip = {
         "bank_slip_key": bank_slip_key,
         **payload.model_dump(mode="json"),
         "status": "OPEN",
     }
+    bank_slip.pop("idempotency_key", None)
     bank_slips[bank_slip_key] = bank_slip
+    if payload.idempotency_key:
+        issuances[payload.idempotency_key] = bank_slip_key
     return bank_slip
 
 
@@ -110,4 +172,8 @@ def pay_bank_slip(
         payments[payload.idempotency_key] = payment
         bank_slip["status"] = "PAID"
         bank_slip["external_transaction_id"] = payment["external_transaction_id"]
+
+        if bank_slip_key == "fixture-external-timeout":
+            time.sleep(float(os.environ.get("BANKSLIP_TIMEOUT_DELAY_SECONDS", "6")))
+
         return payment

@@ -142,3 +142,94 @@ class ExternalBankTimeout(QIException):
             "The external bank did not respond before the timeout.",
             "O banco externo não respondeu dentro do prazo.",
         )
+
+
+class BankSlipNotFound(QIException):
+    code = "QIT001024"
+
+    def __init__(self, bank_slip_key: str) -> None:
+        super().__init__(
+            "Bank slip not found",
+            self.code,
+            404,
+            f"Bank slip {bank_slip_key} was not found.",
+            "Boleto não encontrado.",
+        )
+
+
+class BankSlipExpired(QIException):
+    code = "QIT001025"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip expired",
+            self.code,
+            409,
+            "The bank slip is expired.",
+            "O boleto está vencido.",
+        )
+
+
+class BankSlipAlreadyPaid(QIException):
+    code = "QIT001026"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip already paid",
+            self.code,
+            409,
+            "The bank slip has already been paid.",
+            "O boleto já foi pago.",
+        )
+
+
+class BankSlipPaymentConflict(QIException):
+    code = "QIT001027"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip payment conflict",
+            self.code,
+            409,
+            "The bank slip already has a payment in progress for another payer or amount.",
+            "O boleto já possui um pagamento incompatível em andamento.",
+        )
+
+
+class BankSlipTimeout(QIException):
+    code = "QIT001028"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip service timeout",
+            self.code,
+            504,
+            "The bank slip service did not respond before the timeout.",
+            "O serviço de boletos não respondeu dentro do prazo.",
+        )
+
+
+class BankSlipRejected(QIException):
+    code = "QIT001029"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip operation rejected",
+            self.code,
+            422,
+            "The bank slip service rejected the operation.",
+            "O serviço de boletos rejeitou a operação.",
+        )
+
+
+class BankSlipBeneficiaryMismatch(QIException):
+    code = "QIT001030"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Bank slip beneficiary mismatch",
+            self.code,
+            409,
+            "The bank slip beneficiary does not match the locally registered beneficiary.",
+            "O beneficiário do boleto não corresponde ao beneficiário local registrado.",
+        )
