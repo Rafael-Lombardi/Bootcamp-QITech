@@ -49,6 +49,7 @@ class AccountRepository:
             self.session.query(Account)
             .filter(Account.id.in_((first_id, second_id)))
             .order_by(Account.id)
+            .populate_existing()
             .with_for_update()
             .all()
         )

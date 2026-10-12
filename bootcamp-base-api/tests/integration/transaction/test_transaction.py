@@ -39,6 +39,20 @@ def activate_accounts(*account_keys: str) -> None:
             )
 
 
+def transfer(sender_key: str, recipient_number: int, amount: int, channel: str = "PIX", idempotency_key: str = None):
+    return request(
+        "POST",
+        "/transacao",
+        {
+            "remetente": sender_key,
+            "destinatario": {"banco_id": 1, "agencia": 1234, "conta": recipient_number},
+            "valor": amount,
+            "canal": channel,
+        },
+        headers={"chave_de_idempotencia": idempotency_key or str(uuid4())},
+    )
+
+
 class TestTransaction:
     def test_internal_pix_creates_signed_entries_and_moves_balances(self):
         DbUtils.rollback()
@@ -121,3 +135,78 @@ class TestTransaction:
         assert response["tarifa_cobrada"] == 1000
         assert request("GET", f"/conta/{sender_key}")[1]["saldo"] == "0.00"
         assert request("GET", f"/conta/{recipient_key}")[1]["saldo"] == "30.00"
+
+    def test_rejects_unknown_sender(self):
+        DbUtils.rollback()
+
+        status, response = transfer(str(uuid4()), 1, 100)
+
+        assert status == 404
+        assert response["code"] == "QIT001013"
+
+    def test_rejects_unknown_recipient(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(5, "Sender"), 5)
+        activate_accounts(sender_key)
+
+        status, response = transfer(sender_key, 999, 100)
+
+        assert status == 404
+        assert response["code"] == "QIT001014"
+
+    def test_rejects_inactive_sender(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(6, "Sender"), 6)
+        create_account(create_client(7, "Recipient"), 7)
+
+        status, response = transfer(sender_key, 7, 100)
+
+        assert status == 409
+        assert response["code"] == "QIT001016"
+
+    def test_rejects_unavailable_recipient(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(8, "Sender"), 8)
+        create_account(create_client(9, "Recipient"), 9)
+        activate_accounts(sender_key)
+
+        status, response = transfer(sender_key, 9, 100)
+
+        assert status == 409
+        assert response["code"] == "QIT001017"
+
+    def test_rejects_insufficient_balance(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(10, "Sender"), 10)
+        recipient_key = create_account(create_client(11, "Recipient"), 11)
+        activate_accounts(sender_key, recipient_key)
+
+        status, response = transfer(sender_key, 11, 2001)
+
+        assert status == 422
+        assert response["code"] == "QIT001021"
+
+    def test_rejects_same_account_transfer(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(12, "Sender"), 12)
+        activate_accounts(sender_key)
+
+        status, response = transfer(sender_key, 12, 100)
+
+        assert status == 422
+        assert response["code"] == "QIT001023"
+
+    def test_rejects_idempotency_key_for_different_request(self):
+        DbUtils.rollback()
+        sender_key = create_account(create_client(13, "Sender"), 13)
+        recipient_key = create_account(create_client(14, "Recipient"), 14)
+        activate_accounts(sender_key, recipient_key)
+        idempotency_key = str(uuid4())
+
+        status, _ = transfer(sender_key, 14, 100, idempotency_key=idempotency_key)
+        assert status == 201
+
+        status, response = transfer(sender_key, 14, 200, idempotency_key=idempotency_key)
+
+        assert status == 422
+        assert response["code"] == "QIT001022"
