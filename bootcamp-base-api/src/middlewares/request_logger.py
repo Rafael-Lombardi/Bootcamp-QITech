@@ -38,7 +38,7 @@ def register_request_logger_middleware(application: FastAPI) -> None:
             return await call_next(request)
 
         # O que veio depois do "?" no endereço entra no log de entrada:
-        # é metade do pedido, e sem ele a linha "GET /sample_entities"
+        # é metade do pedido, e sem ele a linha "GET /conta/.../transacao"
         # não diz qual página alguém pediu.
         #
         # E fica a lição pelo avesso: se a query string vai parar no

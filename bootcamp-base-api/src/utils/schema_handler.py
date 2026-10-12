@@ -81,16 +81,16 @@ class SchemaHandler:
 
         Usa-se assim, no método do resource que recebe corpo:
 
-            class SampleEntityResource:
-                @SchemaHandler.validate("post_sample_entity.json")
+            class ClientResource:
+                @SchemaHandler.validate("post_client.json")
                 def on_post(self, payload: dict) -> dict:
 
         O nome do arquivo é o único argumento, e ele aponta pra dentro
         de src/schemas/. Método que não recebe corpo — um GET, um
         DELETE — não leva decorator nenhum: não há o que conferir.
 
-        Repare que o endereço HTTP não aparece aqui. Quem liga
-        "/sample_entity" a este método é o src/app.py, e é de propósito:
+        Repare que o endereço HTTP não aparece aqui. Quem liga a rota
+        ao método é o src/app.py, e é de propósito:
         o resource cuida do CONTEÚDO da requisição, o app.py cuida do
         ENDEREÇO dela.
         """
@@ -124,8 +124,8 @@ class SchemaHandler:
 
         Usa-se assim, num metodo que recebe a requisicao inteira:
 
-            class SampleEntityResource:
-                @SchemaHandler.validate_query_params("get_sample_entities.json")
+            class AccountResource:
+                @SchemaHandler.validate_query_params("get_account_transactions.json")
                 def on_get_list(self, request: Request) -> JSONResponse:
 
         Por que ler do `request` em vez dos argumentos da funcao: o
