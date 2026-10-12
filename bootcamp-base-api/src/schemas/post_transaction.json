@@ -1,0 +1,21 @@
+{
+  "title": "PostTransaction",
+  "type": "object",
+  "properties": {
+    "remetente": {"type": "string", "minLength": 1},
+    "destinatario": {
+      "type": "object",
+      "properties": {
+        "banco_id": {"type": "integer", "minimum": 1},
+        "agencia": {"type": "integer", "minimum": 1},
+        "conta": {"type": "integer", "minimum": 1}
+      },
+      "required": ["banco_id", "agencia", "conta"],
+      "additionalProperties": false
+    },
+    "valor": {"type": "integer", "minimum": 1},
+    "canal": {"type": "string", "enum": ["PIX", "TED"]}
+  },
+  "required": ["remetente", "destinatario", "valor", "canal"],
+  "additionalProperties": false
+}

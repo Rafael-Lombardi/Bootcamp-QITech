@@ -14,8 +14,9 @@ BASE_URL = (
 HEADERS = {"INTERNAL-TOKEN": environ.get("INTERNAL_TOKEN", "default_token")}
 
 
-def request(method: str, path: str, payload: dict = None):
-    response = requests.request(method, f"{BASE_URL}{path}", json=payload, headers=HEADERS)
+def request(method: str, path: str, payload: dict = None, headers: dict = None):
+    request_headers = {**HEADERS, **(headers or {})}
+    response = requests.request(method, f"{BASE_URL}{path}", json=payload, headers=request_headers)
     return response.status_code, response.json()
 
 

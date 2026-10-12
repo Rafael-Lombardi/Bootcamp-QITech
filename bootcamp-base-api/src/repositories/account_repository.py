@@ -43,3 +43,13 @@ class AccountRepository:
             )
             .count()
         )
+
+    def get_pair_for_update(self, first_id: int, second_id: int) -> list[Account]:
+        return (
+            self.session.query(Account)
+            .filter(Account.id.in_((first_id, second_id)))
+            .order_by(Account.id)
+            .populate_existing()
+            .with_for_update()
+            .all()
+        )
