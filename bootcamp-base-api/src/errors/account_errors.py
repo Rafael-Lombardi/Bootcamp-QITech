@@ -38,3 +38,29 @@ class ClientAccountLimit(QIException):
             f"Client cannot have more than {maximum} open accounts.",
             f"Cliente não pode ter mais de {maximum} contas abertas.",
         )
+
+
+class AccountHasBalance(QIException):
+    code = "QIT001009"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Account has balance",
+            self.code,
+            409,
+            "Account must have zero balance before deactivation.",
+            "A conta precisa ter saldo zerado antes da desativação.",
+        )
+
+
+class AccountHasInProgressTransaction(QIException):
+    code = "QIT001010"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Account has an in-progress transaction",
+            self.code,
+            409,
+            "Account cannot be deactivated while it has an in-progress transaction.",
+            "A conta não pode ser desativada enquanto tiver transação em andamento.",
+        )

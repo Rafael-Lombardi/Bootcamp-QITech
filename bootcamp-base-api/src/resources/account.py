@@ -16,3 +16,8 @@ class AccountResource:
     def on_get_by_key(self, account_key: str) -> JSONResponse:
         account = AccountController().get_by_key(account_key)
         return JSONResponse(content=jsonable_encoder(account), status_code=http_status.HTTP_200_OK)
+
+    @SchemaHandler.validate("patch_account.json")
+    def on_patch(self, account_key: str, payload: dict) -> JSONResponse:
+        account = AccountController().update_status(account_key, payload)
+        return JSONResponse(content=jsonable_encoder(account), status_code=http_status.HTTP_200_OK)

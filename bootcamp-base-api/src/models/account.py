@@ -34,3 +34,4 @@ class Account(Base):
     )
 
     client = relationship("Client", back_populates="accounts")
+    status_events = relationship("AccountStatusEvent", back_populates="account")

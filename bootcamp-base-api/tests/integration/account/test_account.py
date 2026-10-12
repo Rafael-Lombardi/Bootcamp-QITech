@@ -1,4 +1,7 @@
 from datetime import date
+from uuid import uuid4
+
+from sqlalchemy import create_engine, text
 
 from tests.integration.client.test_client import request
 from tests.utils import DbUtils
@@ -72,3 +75,92 @@ class TestAccount:
         )
         assert status == 409
         assert response["code"] == "QIT001007"
+
+    def test_deactivates_account_with_zero_balance(self):
+        DbUtils.rollback()
+        account_key = self._create_account()
+
+        status, account = request(
+            "PATCH",
+            f"/conta/{account_key}",
+            {"novo_estado": "DESATIVADA", "razao": "Encerramento solicitado"},
+        )
+
+        assert status == 200
+        assert account["estado"] == "DESATIVADA"
+        assert account["saldo"] == "0.00"
+
+    def test_rejects_deactivation_with_non_zero_balance(self):
+        DbUtils.rollback()
+        account_key = self._create_account()
+        engine = create_engine(DbUtils.database_url())
+        with engine.begin() as connection:
+            connection.execute(
+                text("UPDATE account SET balance_cents = 1 WHERE account_key = :key"),
+                {"key": account_key},
+            )
+
+        status, response = request(
+            "PATCH",
+            f"/conta/{account_key}",
+            {"novo_estado": "DESATIVADA", "razao": "Encerramento solicitado"},
+        )
+
+        assert status == 409
+        assert response["code"] == "QIT001009"
+
+    def test_rejects_deactivation_with_in_progress_transaction(self):
+        DbUtils.rollback()
+        account_key = self._create_account()
+        engine = create_engine(DbUtils.database_url())
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO bank_transaction(
+                        transaction_key, idempotency_key,
+                        sender_bank_id, sender_branch, sender_number,
+                        recipient_bank_id, recipient_branch, recipient_number,
+                        amount_cents, fee_cents, channel, status
+                    ) VALUES (
+                        :transaction_key, :idempotency_key,
+                        1, 1234, 5678,
+                        2, 4321, 8765,
+                        100, 0, 'PIX', 'EM_ANDAMENTO'
+                    )
+                    """
+                ),
+                {"transaction_key": str(uuid4()), "idempotency_key": str(uuid4())},
+            )
+
+        status, response = request(
+            "PATCH",
+            f"/conta/{account_key}",
+            {"novo_estado": "DESATIVADA", "razao": "Encerramento solicitado"},
+        )
+
+        assert status == 409
+        assert response["code"] == "QIT001010"
+
+    def test_rejects_deactivation_for_unknown_account(self):
+        DbUtils.rollback()
+
+        status, response = request(
+            "PATCH",
+            f"/conta/{uuid4()}",
+            {"novo_estado": "DESATIVADA", "razao": "Encerramento solicitado"},
+        )
+
+        assert status == 404
+        assert response["code"] == "QIT001005"
+
+    @staticmethod
+    def _create_account() -> str:
+        client_key = create_client()
+        status, response = request(
+            "POST",
+            f"/cliente/{client_key}/conta",
+            {"agencia": 1234, "numero": 5678},
+        )
+        assert status == 201
+        return response["chave_conta"]

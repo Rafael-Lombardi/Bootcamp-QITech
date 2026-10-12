@@ -1,0 +1,13 @@
+{
+  "title": "PatchAccount",
+  "type": "object",
+  "properties": {
+    "novo_estado": {
+      "type": "string",
+      "enum": ["PENDENTE", "ATIVA", "BLOQUEADA", "DESATIVADA"]
+    },
+    "razao": {"type": "string", "minLength": 1, "maxLength": 255}
+  },
+  "required": ["novo_estado", "razao"],
+  "additionalProperties": false
+}
