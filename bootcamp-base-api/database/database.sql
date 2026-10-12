@@ -72,3 +72,31 @@ CREATE TABLE account(
     CHECK(balance_cents >= 0),
     CHECK(status IN ('PENDENTE', 'ATIVA', 'BLOQUEADA', 'DESATIVADA'))
 );
+
+CREATE TABLE bank_transaction(
+    id                              SERIAL PRIMARY KEY,
+    transaction_key                CHAR(36) NOT NULL,
+    idempotency_key                CHAR(36) NOT NULL,
+    sender_account_id              INTEGER NOT NULL REFERENCES account(id),
+    recipient_account_id           INTEGER NOT NULL REFERENCES account(id),
+    amount_cents                    BIGINT NOT NULL,
+    fee_cents                       BIGINT NOT NULL DEFAULT(0),
+    channel                         VARCHAR(10) NOT NULL,
+    status                          VARCHAR(20) NOT NULL,
+    created_at                      TIMESTAMP NOT NULL DEFAULT(NOW()),
+    UNIQUE(transaction_key),
+    UNIQUE(idempotency_key),
+    CHECK(amount_cents > 0),
+    CHECK(fee_cents >= 0),
+    CHECK(channel IN ('PIX', 'TED')),
+    CHECK(status IN ('CONCLUIDA', 'EM_ANDAMENTO', 'CANCELADA', 'FALHOU'))
+);
+
+CREATE TABLE account_entry(
+    id                              SERIAL PRIMARY KEY,
+    transaction_id                 INTEGER NOT NULL REFERENCES bank_transaction(id),
+    account_id                     INTEGER NOT NULL REFERENCES account(id),
+    movement_cents                 BIGINT NOT NULL,
+    created_at                     TIMESTAMP NOT NULL DEFAULT(NOW()),
+    CHECK(movement_cents <> 0)
+);

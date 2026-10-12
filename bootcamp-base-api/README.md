@@ -392,6 +392,7 @@ Este é o mapa atual da API:
 | `GET /cliente/{chave_cliente}` | busca cliente e suas contas | `200` + o cliente |
 | `POST /cliente/{chave_cliente}/conta` | abre conta `PENDENTE` | `201` ao criar; `200` ao repetir agência e número do mesmo cliente |
 | `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
+| `POST /transacao` | transfere via PIX ou TED entre contas internas | `201` + a transação |
 
 As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
 são abertas — a primeira você já usou: foi ela que respondeu no
@@ -704,6 +705,13 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001005` | a conta procurada não existe                     |
 | `QIT001006` | agência e número já pertencem a outro cliente   |
 | `QIT001007` | cliente já tem cinco contas abertas              |
+| `QIT001013` | a conta remetente não existe                     |
+| `QIT001014` | a conta destinatária não existe                  |
+| `QIT001016` | a conta remetente não está ativa                 |
+| `QIT001017` | a conta destinatária não está disponível         |
+| `QIT001021` | saldo menor que valor mais tarifa                |
+| `QIT001022` | chave de idempotência já usada                   |
+| `QIT001023` | remetente e destinatário são a mesma conta       |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.
