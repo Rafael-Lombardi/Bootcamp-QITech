@@ -1,4 +1,5 @@
 from models import Client, ClientType
+from dtos.account_dto import AccountDTO
 
 
 class ClientDTO:
@@ -13,7 +14,7 @@ class ClientDTO:
             "tipo": client.client_type.value,
             "documento": client.document_number,
             "nome": client.name,
-            "contas": [],
+            "contas": [AccountDTO.obj_to_dict(account) for account in client.accounts],
         }
         if client.client_type == ClientType.PF:
             dto["nascimento"] = client.birthdate.isoformat()
