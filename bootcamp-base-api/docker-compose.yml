@@ -75,6 +75,13 @@ services:
     environment:
       BANKSLIP_API_INTERNAL_TOKEN: ${BANKSLIP_API_INTERNAL_TOKEN:-default_token}
 
+  document-validator-fake:
+    build: ./document-validator-fake
+    ports:
+      - "${DOCUMENT_VALIDATOR_PORT:-8082}:8080"
+    environment:
+      DOCUMENT_VALIDATOR_TOKEN: ${DOCUMENT_VALIDATOR_TOKEN:-default_token}
+
   db:
     build: ./database/.
     environment:
