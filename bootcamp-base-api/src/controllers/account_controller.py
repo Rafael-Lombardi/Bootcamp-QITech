@@ -3,7 +3,15 @@ from sqlalchemy.exc import IntegrityError
 from constants import BANK_ID
 from controllers.base_controller import BaseController
 from dtos import AccountDTO
-from errors import AccountNotFound, AccountOwnedByAnotherClient, ClientAccountLimit, ClientNotFound
+from errors import (
+    AccountHasBalance,
+    AccountHasInProgressTransaction,
+    AccountNotFound,
+    AccountOwnedByAnotherClient,
+    ClientAccountLimit,
+    ClientNotFound,
+)
+from models import AccountStatus
 from repositories import AccountRepository, ClientRepository
 
 
@@ -47,6 +55,23 @@ class AccountController(BaseController):
         account = self.account_repository.get_by_key(account_key)
         if account is None:
             raise AccountNotFound(account_key)
+        return AccountDTO.obj_to_dict(account)
+
+    def update_status(self, account_key: str, account_data: dict) -> dict:
+        account = self.account_repository.get_by_key_for_update(account_key)
+        if account is None:
+            raise AccountNotFound(account_key)
+
+        new_status = AccountStatus(account_data["novo_estado"])
+        if new_status == AccountStatus.DESATIVADA:
+            if account.balance_cents != 0:
+                raise AccountHasBalance()
+            if self.account_repository.has_in_progress_transaction(account):
+                raise AccountHasInProgressTransaction()
+
+        account.status = new_status
+        self.account_repository.create_status_event(account.id, new_status, account_data["razao"])
+        self.session.commit()
         return AccountDTO.obj_to_dict(account)
 
     @staticmethod

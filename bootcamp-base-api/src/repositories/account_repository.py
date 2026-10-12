@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 from database import Context
-from models import Account, AccountStatus
+from sqlalchemy import and_, or_
+
+from models import Account, AccountStatus, AccountStatusEvent, Transaction, TransactionStatus
 
 
 class AccountRepository:
@@ -22,6 +24,15 @@ class AccountRepository:
 
     def get_by_key(self, account_key: str) -> Account:
         return self.session.query(Account).filter(Account.account_key == account_key).first()
+
+    def get_by_key_for_update(self, account_key: str) -> Account:
+        return (
+            self.session.query(Account)
+            .filter(Account.account_key == account_key)
+            .populate_existing()
+            .with_for_update()
+            .first()
+        )
 
     def get_by_identity(self, bank_id: int, branch: int, number: int) -> Account:
         return (
@@ -53,3 +64,27 @@ class AccountRepository:
             .with_for_update()
             .all()
         )
+
+    def has_in_progress_transaction(self, account: Account) -> bool:
+        sender = and_(
+            Transaction.sender_bank_id == account.bank_id,
+            Transaction.sender_branch == account.branch,
+            Transaction.sender_number == account.number,
+        )
+        recipient = and_(
+            Transaction.recipient_bank_id == account.bank_id,
+            Transaction.recipient_branch == account.branch,
+            Transaction.recipient_number == account.number,
+        )
+        return (
+            self.session.query(Transaction.id)
+            .filter(Transaction.status == TransactionStatus.EM_ANDAMENTO)
+            .filter(or_(sender, recipient))
+            .first()
+            is not None
+        )
+
+    def create_status_event(self, account_id: int, status: AccountStatus, reason: str) -> AccountStatusEvent:
+        event = AccountStatusEvent(account_id=account_id, status=status, reason=reason)
+        self.session.add(event)
+        return event

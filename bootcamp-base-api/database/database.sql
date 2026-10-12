@@ -73,6 +73,16 @@ CREATE TABLE account(
     CHECK(status IN ('PENDENTE', 'ATIVA', 'BLOQUEADA', 'DESATIVADA'))
 );
 
+CREATE TABLE account_status_event(
+    id                              SERIAL PRIMARY KEY,
+    account_id                     INTEGER NOT NULL REFERENCES account(id),
+    status                          VARCHAR(20) NOT NULL,
+    reason                          VARCHAR(255) NOT NULL,
+    event_datetime                  TIMESTAMP NOT NULL DEFAULT(NOW()),
+    created_at                      TIMESTAMP NOT NULL DEFAULT(NOW()),
+    CHECK(status IN ('PENDENTE', 'ATIVA', 'BLOQUEADA', 'DESATIVADA'))
+);
+
 CREATE TABLE bank_transaction(
     id                              SERIAL PRIMARY KEY,
     transaction_key                CHAR(36) NOT NULL,

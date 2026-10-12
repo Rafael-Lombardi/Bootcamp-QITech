@@ -155,6 +155,11 @@ def create_app() -> FastAPI:
         methods=["GET"],
     )
     application.add_api_route(
+        "/conta/{account_key}",
+        account_resource.on_patch,
+        methods=["PATCH"],
+    )
+    application.add_api_route(
         "/transacao",
         transaction_resource.on_post,
         methods=["POST"],

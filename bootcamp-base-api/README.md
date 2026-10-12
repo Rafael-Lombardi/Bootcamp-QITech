@@ -392,6 +392,7 @@ Este é o mapa atual da API:
 | `GET /cliente/{chave_cliente}` | busca cliente e suas contas | `200` + o cliente |
 | `POST /cliente/{chave_cliente}/conta` | abre conta `PENDENTE` | `201` ao criar; `200` ao repetir agência e número do mesmo cliente |
 | `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
+| `PATCH /conta/{chave_conta}` | altera estado da conta; desativação exige saldo zero e nenhuma transação em andamento | `200` + a conta |
 | `POST /transacao` | transfere via PIX ou TED entre contas internas | `201` ao criar; `200` ao repetir a mesma chave de idempotência |
 
 As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
@@ -705,6 +706,8 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001005` | a conta procurada não existe                     |
 | `QIT001006` | agência e número já pertencem a outro cliente   |
 | `QIT001007` | cliente já tem cinco contas abertas              |
+| `QIT001009` | conta tem saldo ao tentar desativar              |
+| `QIT001010` | conta tem transação em andamento ao desativar   |
 | `QIT001013` | a conta remetente não existe                     |
 | `QIT001014` | a conta destinatária não existe                  |
 | `QIT001016` | a conta remetente não está ativa                 |
