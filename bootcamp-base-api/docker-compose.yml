@@ -40,6 +40,9 @@ services:
       BANKSLIP_API_URL: http://bank-slip-fake:8080
       BANKSLIP_API_INTERNAL_TOKEN: ${BANKSLIP_API_INTERNAL_TOKEN:-default_token}
       BANKSLIP_API_TIMEOUT: ${BANKSLIP_API_TIMEOUT:-5}
+      EXTERNAL_BANK_API_URL: http://external-bank-fake:8080
+      EXTERNAL_BANK_API_INTERNAL_TOKEN: ${EXTERNAL_BANK_API_INTERNAL_TOKEN:-default_token}
+      EXTERNAL_BANK_API_TIMEOUT: ${EXTERNAL_BANK_API_TIMEOUT:-1}
     volumes:
       # Monta o codigo pra dentro do container: salvou o arquivo,
       # a API recarrega sozinha (o --reload ali embaixo).

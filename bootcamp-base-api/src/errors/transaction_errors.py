@@ -90,3 +90,55 @@ class SameAccountTransfer(QIException):
             "Sender and recipient accounts must be different.",
             "Remetente e destinatário devem ser contas diferentes.",
         )
+
+
+class ExternalRecipientNotFound(QIException):
+    code = "QIT001015"
+
+    def __init__(self, bank_id: int, branch: int, number: int) -> None:
+        super().__init__(
+            "External recipient not found",
+            self.code,
+            404,
+            f"External recipient account {bank_id}/{branch}/{number} was not found.",
+            "Conta destinatária externa não encontrada.",
+        )
+
+
+class ExternalRecipientNotAvailable(QIException):
+    code = "QIT001018"
+
+    def __init__(self, bank_id: int, branch: int, number: int) -> None:
+        super().__init__(
+            "External recipient not available",
+            self.code,
+            409,
+            f"External recipient account {bank_id}/{branch}/{number} is not active.",
+            "Conta destinatária externa não está disponível.",
+        )
+
+
+class ExternalTransactionRejected(QIException):
+    code = "QIT001019"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "External transaction rejected",
+            self.code,
+            422,
+            "The external bank rejected the transaction.",
+            "O banco externo rejeitou a transação.",
+        )
+
+
+class ExternalBankTimeout(QIException):
+    code = "QIT001020"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "External bank timeout",
+            self.code,
+            504,
+            "The external bank did not respond before the timeout.",
+            "O banco externo não respondeu dentro do prazo.",
+        )
