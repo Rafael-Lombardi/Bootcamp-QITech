@@ -1,0 +1,10 @@
+{
+  "title": "PostAccount",
+  "type": "object",
+  "properties": {
+    "agencia": {"type": "integer", "minimum": 1},
+    "numero": {"type": "integer", "minimum": 1}
+  },
+  "required": ["agencia", "numero"],
+  "additionalProperties": false
+}

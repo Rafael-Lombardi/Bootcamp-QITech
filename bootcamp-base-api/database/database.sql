@@ -53,3 +53,22 @@ CREATE TABLE client(
         (client_type = 'PJ' AND birthdate IS NULL AND corporate_name IS NOT NULL)
     )
 );
+
+CREATE TABLE account(
+    id                              SERIAL PRIMARY KEY,
+    account_key                     CHAR(36) NOT NULL,
+    bank_id                         INTEGER NOT NULL,
+    branch                          INTEGER NOT NULL,
+    number                          INTEGER NOT NULL,
+    client_id                       INTEGER NOT NULL REFERENCES client(id),
+    balance_cents                   BIGINT NOT NULL DEFAULT(0),
+    status                          VARCHAR(20) NOT NULL DEFAULT('PENDENTE'),
+    created_at                      TIMESTAMP NOT NULL DEFAULT(NOW()),
+    UNIQUE(account_key),
+    UNIQUE(bank_id, branch, number),
+    CHECK(bank_id > 0),
+    CHECK(branch > 0),
+    CHECK(number > 0),
+    CHECK(balance_cents >= 0),
+    CHECK(status IN ('PENDENTE', 'ATIVA', 'BLOQUEADA', 'DESATIVADA'))
+);

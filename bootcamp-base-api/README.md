@@ -390,6 +390,8 @@ Este é o mapa atual da API:
 | `GET /health_check` | diz se a API está de pé | `204`, sem corpo |
 | `POST /cliente` | cadastra PF ou PJ | `201` ao criar; `200` ao repetir os mesmos dados |
 | `GET /cliente/{chave_cliente}` | busca cliente e suas contas | `200` + o cliente |
+| `POST /cliente/{chave_cliente}/conta` | abre conta `PENDENTE` | `201` ao criar; `200` ao repetir agência e número do mesmo cliente |
+| `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
 
 As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
 são abertas — a primeira você já usou: foi ela que respondeu no
@@ -699,6 +701,9 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001002` | CPF ou CNPJ tem dígitos verificadores inválidos  |
 | `QIT001003` | documento já cadastrado com dados diferentes     |
 | `QIT001004` | a pessoa física é menor de 18 anos               |
+| `QIT001005` | a conta procurada não existe                     |
+| `QIT001006` | agência e número já pertencem a outro cliente   |
+| `QIT001007` | cliente já tem cinco contas abertas              |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.

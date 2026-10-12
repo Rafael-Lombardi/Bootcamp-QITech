@@ -1,4 +1,5 @@
 from sqlalchemy import CheckConstraint, Column, Date, DateTime, Enum, Integer, String, UniqueConstraint, func
+from sqlalchemy.orm import relationship
 
 from models.base import Base
 from models.client_type import ClientType
@@ -34,3 +35,5 @@ class Client(Base):
             "(client_type = 'PJ' AND birthdate IS NULL AND corporate_name IS NOT NULL)"
         ),
     )
+
+    accounts = relationship("Account", back_populates="client", lazy="selectin")
