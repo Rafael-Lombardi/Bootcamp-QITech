@@ -223,7 +223,7 @@ class BankSlipRejected(QIException):
 
 
 class BankSlipBeneficiaryMismatch(QIException):
-    code = "QIT001030"
+    code = "QIT001031"
 
     def __init__(self) -> None:
         super().__init__(
@@ -232,4 +232,17 @@ class BankSlipBeneficiaryMismatch(QIException):
             409,
             "The bank slip beneficiary does not match the locally registered beneficiary.",
             "O beneficiário do boleto não corresponde ao beneficiário local registrado.",
+        )
+
+
+class StatementCursorNotFound(QIException):
+    code = "QIT001030"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Statement cursor not found",
+            self.code,
+            400,
+            "The statement cursor does not exist or belongs to another account.",
+            "O cursor do extrato não existe ou pertence a outra conta.",
         )

@@ -1,0 +1,15 @@
+{
+  "title": "GetAccountTransactions",
+  "type": "object",
+  "properties": {
+    "limite": {
+      "type": "string",
+      "pattern": "^(100|[1-9][0-9]?)$"
+    },
+    "proxima": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    }
+  },
+  "additionalProperties": false
+}

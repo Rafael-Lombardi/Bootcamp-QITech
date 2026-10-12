@@ -10,3 +10,9 @@ class TransactionDTO:
             "valor": transaction.amount_cents,
             "tarifa_cobrada": transaction.fee_cents,
         }
+
+    @staticmethod
+    def statement_to_dict(transaction: Transaction, entry) -> dict:
+        transaction_dict = TransactionDTO.obj_to_dict(transaction)
+        transaction_dict["movimentacao"] = entry.movement_cents
+        return transaction_dict
