@@ -1,0 +1,20 @@
+{
+  "title": "PostBankSlip",
+  "type": "object",
+  "properties": {
+    "beneficiario": {"type": "string", "minLength": 1},
+    "valor": {"type": "integer", "minimum": 1},
+    "data_vencimento": {"type": "string", "format": "date"},
+    "pagador": {
+      "type": "object",
+      "properties": {
+        "nome": {"type": "string", "minLength": 1},
+        "documento": {"type": "string", "minLength": 1}
+      },
+      "required": ["nome", "documento"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["beneficiario", "valor", "data_vencimento", "pagador"],
+  "additionalProperties": false
+}

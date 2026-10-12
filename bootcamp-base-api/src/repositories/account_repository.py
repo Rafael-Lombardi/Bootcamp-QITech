@@ -25,10 +25,22 @@ class AccountRepository:
     def get_by_key(self, account_key: str) -> Account:
         return self.session.query(Account).filter(Account.account_key == account_key).first()
 
+    def get_by_id(self, account_id: int) -> Account:
+        return self.session.query(Account).filter(Account.id == account_id).first()
+
     def get_by_key_for_update(self, account_key: str) -> Account:
         return (
             self.session.query(Account)
             .filter(Account.account_key == account_key)
+            .populate_existing()
+            .with_for_update()
+            .first()
+        )
+
+    def get_by_id_for_update(self, account_id: int) -> Account:
+        return (
+            self.session.query(Account)
+            .filter(Account.id == account_id)
             .populate_existing()
             .with_for_update()
             .first()

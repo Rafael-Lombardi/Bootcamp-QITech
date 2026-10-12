@@ -394,6 +394,8 @@ Este é o mapa atual da API:
 | `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
 | `PATCH /conta/{chave_conta}` | altera estado da conta; desativação exige saldo zero e nenhuma transação em andamento | `200` + a conta |
 | `POST /transacao` | transfere via PIX ou TED entre contas internas ou para banco externo | `201` ao criar; `200` ao repetir a mesma chave de idempotência |
+| `POST /boleto` | emite boleto para uma conta beneficiária interna | `201` ao registrar; `200` ao repetir a chave |
+| `POST /boleto/{chave_boleto}/pagamento` | paga boleto externo ou emitido internamente | `201` ao liquidar; `200` ao reconciliar/repetir |
 
 As duas de baixo exigem o `INTERNAL-TOKEN` (seção 6). As duas de cima
 são abertas — a primeira você já usou: foi ela que respondeu no
@@ -413,6 +415,24 @@ persiste essa chave, associa-a à transação e rejeita o reuso com payload
 incompatível. Isso deixa a identidade da operação explícita e torna o retry
 determinístico: chave igual retoma a transação existente; chave diferente é
 uma nova operação. Não há retry automático em background nesta versão.
+
+### Boletos
+
+`POST /boleto` exige `beneficiario`, `valor`, `data_vencimento` e `pagador`. O
+beneficiário precisa ser uma conta interna ativa; a API registra a conta
+exata antes de pedir a emissão ao `bank-slip-fake`. A chave retornada pelo
+serviço externo é persistida localmente.
+
+O pagamento recebe `pagador` no corpo e a chave de idempotência no cabeçalho.
+Primeiro a API consulta o boleto; depois cria uma transação `EM_ANDAMENTO` e
+chama o serviço externo sem manter locks de conta. Após `SETTLED`, debita o
+pagador e, para boletos emitidos localmente, credita a conta beneficiária
+registrada. Boletos externos não criam crédito local.
+
+O boleto é uma segunda proteção contra duplicidade: sua chave só pode ter um
+pagamento local. Um novo pagamento com outro pagador entra em conflito; uma
+tentativa após a liquidação é rejeitada como boleto já pago. Timeout mantém a
+transação em andamento para reconciliação.
 
 Os parâmetros da listagem, todos opcionais e combináveis:
 `?limit=` (padrão 10, teto 100) · `?page=` (padrão 0) · `?status=`
@@ -734,6 +754,13 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001021` | saldo menor que valor mais tarifa                |
 | `QIT001022` | chave de idempotência já usada                   |
 | `QIT001023` | remetente e destinatário são a mesma conta       |
+| `QIT001024` | o boleto procurado não existe                    |
+| `QIT001025` | o boleto está vencido                             |
+| `QIT001026` | o boleto já foi pago                              |
+| `QIT001027` | o boleto tem pagamento incompatível em andamento |
+| `QIT001028` | o serviço de boletos não respondeu a tempo        |
+| `QIT001029` | o serviço de boletos rejeitou a operação          |
+| `QIT001030` | beneficiário externo diverge do registro local    |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.

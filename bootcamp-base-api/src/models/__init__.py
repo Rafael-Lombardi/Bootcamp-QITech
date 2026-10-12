@@ -7,3 +7,5 @@ from models.transaction_channel import TransactionChannel
 from models.transaction_status import TransactionStatus
 from models.transaction import Transaction
 from models.ledger_entry import LedgerEntry
+from models.bank_slip_status import BankSlipStatus
+from models.bank_slip import BankSlip

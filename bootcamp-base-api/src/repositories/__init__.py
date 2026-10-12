@@ -1,3 +1,4 @@
 from repositories.client_repository import ClientRepository
 from repositories.account_repository import AccountRepository
 from repositories.transaction_repository import TransactionRepository
+from repositories.bank_slip_repository import BankSlipRepository

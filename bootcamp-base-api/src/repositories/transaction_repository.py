@@ -25,6 +25,13 @@ class TransactionRepository:
             .first()
         )
 
+    def get_by_bank_slip_key(self, bank_slip_key: str) -> Transaction:
+        return (
+            self.session.query(Transaction)
+            .filter(Transaction.bank_slip_key == bank_slip_key)
+            .first()
+        )
+
     def get_pending_outgoing_cents(
         self,
         sender_endpoint: dict,
@@ -54,6 +61,7 @@ class TransactionRepository:
         fee_cents: int,
         channel: TransactionChannel,
         status: TransactionStatus = TransactionStatus.CONCLUIDA,
+        bank_slip_key: str = None,
     ) -> Transaction:
         transaction_key = str(uuid4())
         transaction = Transaction(
@@ -69,6 +77,7 @@ class TransactionRepository:
             fee_cents=fee_cents,
             channel=channel,
             status=status,
+            bank_slip_key=bank_slip_key,
         )
         self.session.add(transaction)
         return transaction
