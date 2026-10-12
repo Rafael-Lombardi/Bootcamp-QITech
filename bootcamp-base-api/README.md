@@ -392,6 +392,7 @@ Este é o mapa atual da API:
 | `GET /cliente/{chave_cliente}` | busca cliente e suas contas | `200` + o cliente |
 | `POST /cliente/{chave_cliente}/conta` | abre conta `PENDENTE` | `201` ao criar; `200` ao repetir agência e número do mesmo cliente |
 | `GET /conta/{chave_conta}` | busca conta, estado e saldo | `200` + a conta |
+| `GET /conta/{chave_conta}/transacao` | extrato dos lançamentos da conta, da mais nova para a mais antiga | `200` + transações e cursor `proxima` |
 | `PATCH /conta/{chave_conta}` | altera estado da conta; desativação exige saldo zero e nenhuma transação em andamento | `200` + a conta |
 | `POST /transacao` | transfere via PIX ou TED entre contas internas ou para banco externo | `201` ao criar; `200` ao repetir a mesma chave de idempotência |
 | `POST /boleto` | emite boleto para uma conta beneficiária interna | `201` ao registrar; `200` ao repetir a chave |
@@ -433,6 +434,9 @@ O boleto é uma segunda proteção contra duplicidade: sua chave só pode ter um
 pagamento local. Um novo pagamento com outro pagador entra em conflito; uma
 tentativa após a liquidação é rejeitada como boleto já pago. Timeout mantém a
 transação em andamento para reconciliação.
+
+O extrato aceita `?limite=` entre 1 e 100 (padrão 20) e `?proxima=` para
+continuar a página anterior. A última página retorna `"proxima": null`.
 
 Os parâmetros da listagem, todos opcionais e combináveis:
 `?limit=` (padrão 10, teto 100) · `?page=` (padrão 0) · `?status=`
@@ -760,7 +764,8 @@ Todo erro da API responde no mesmo formato, com um código próprio:
 | `QIT001027` | o boleto tem pagamento incompatível em andamento |
 | `QIT001028` | o serviço de boletos não respondeu a tempo        |
 | `QIT001029` | o serviço de boletos rejeitou a operação          |
-| `QIT001030` | beneficiário externo diverge do registro local    |
+| `QIT001030` | cursor do extrato inexistente ou de outra conta    |
+| `QIT001031` | beneficiário externo diverge do registro local    |
 
 Um código estável vale mais que uma mensagem bonita: quem integra com a
 API programa em cima do código, não do texto.

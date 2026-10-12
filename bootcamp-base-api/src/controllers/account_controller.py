@@ -10,9 +10,11 @@ from errors import (
     AccountOwnedByAnotherClient,
     ClientAccountLimit,
     ClientNotFound,
+    StatementCursorNotFound,
 )
+from dtos import TransactionDTO
 from models import AccountStatus
-from repositories import AccountRepository, ClientRepository
+from repositories import AccountRepository, ClientRepository, TransactionRepository
 
 
 MAX_OPEN_ACCOUNTS = 5
@@ -23,6 +25,7 @@ class AccountController(BaseController):
         super().__init__(__name__)
         self.account_repository = AccountRepository(self.context)
         self.client_repository = ClientRepository(self.context)
+        self.transaction_repository = TransactionRepository(self.context)
 
     def create(self, client_key: str, account_data: dict) -> tuple[dict, bool]:
         client = self.client_repository.get_by_key(client_key)
@@ -56,6 +59,32 @@ class AccountController(BaseController):
         if account is None:
             raise AccountNotFound(account_key)
         return AccountDTO.obj_to_dict(account)
+
+    def get_statement(self, account_key: str, limit: int, cursor_key: str = None) -> dict:
+        account = self.account_repository.get_by_key(account_key)
+        if account is None:
+            raise AccountNotFound(account_key)
+
+        cursor = None
+        if cursor_key is not None:
+            cursor = self.transaction_repository.get_statement_cursor(account.id, cursor_key)
+            if cursor is None:
+                raise StatementCursorNotFound()
+
+        transactions = self.transaction_repository.get_statement_page(
+            account.id,
+            limit,
+            cursor,
+        )
+        has_next_page = len(transactions) > limit
+        transactions = transactions[:limit]
+        return {
+            "transacoes": [
+                TransactionDTO.statement_to_dict(transaction, entry)
+                for transaction, entry in transactions
+            ],
+            "proxima": transactions[-1][0].transaction_key if has_next_page else None,
+        }
 
     def update_status(self, account_key: str, account_data: dict) -> dict:
         account = self.account_repository.get_by_key_for_update(account_key)

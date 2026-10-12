@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from database import Context
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from models import LedgerEntry, Transaction, TransactionChannel, TransactionStatus
 
 
@@ -22,6 +22,45 @@ class TransactionRepository:
             .filter(Transaction.transaction_key == transaction_key)
             .populate_existing()
             .with_for_update()
+            .first()
+        )
+
+    def get_statement_page(
+        self,
+        account_id: int,
+        limit: int,
+        cursor: tuple[Transaction, LedgerEntry] = None,
+    ) -> list[tuple[Transaction, LedgerEntry]]:
+        query = (
+            self.session.query(Transaction, LedgerEntry)
+            .join(LedgerEntry, LedgerEntry.transaction_id == Transaction.id)
+            .filter(LedgerEntry.account_id == account_id)
+        )
+        if cursor is not None:
+            _, cursor_entry = cursor
+            query = query.filter(
+                or_(
+                    LedgerEntry.created_at < cursor_entry.created_at,
+                    and_(
+                        LedgerEntry.created_at == cursor_entry.created_at,
+                        LedgerEntry.id < cursor_entry.id,
+                    ),
+                )
+            )
+        return (
+            query.order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc())
+            .limit(limit + 1)
+            .all()
+        )
+
+    def get_statement_cursor(self, account_id: int, transaction_key: str):
+        return (
+            self.session.query(Transaction, LedgerEntry)
+            .join(LedgerEntry, LedgerEntry.transaction_id == Transaction.id)
+            .filter(
+                LedgerEntry.account_id == account_id,
+                Transaction.transaction_key == transaction_key,
+            )
             .first()
         )
 
