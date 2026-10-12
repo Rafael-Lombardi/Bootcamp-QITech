@@ -405,6 +405,15 @@ ao banco externo acontece sem segurar lock local. Resposta `SETTLED` cria o
 movimento no extrato; `REJECTED` salva `FALHOU`; timeout deixa a transação em
 andamento e repetir a mesma chave reconcilia pelo identificador externo.
 
+### Decisão de projeto: chave de idempotência
+
+O chamador é responsável por persistir e reutilizar a mesma chave de
+idempotência quando uma resposta se perde ou ocorre timeout. A API também
+persiste essa chave, associa-a à transação e rejeita o reuso com payload
+incompatível. Isso deixa a identidade da operação explícita e torna o retry
+determinístico: chave igual retoma a transação existente; chave diferente é
+uma nova operação. Não há retry automático em background nesta versão.
+
 Os parâmetros da listagem, todos opcionais e combináveis:
 `?limit=` (padrão 10, teto 100) · `?page=` (padrão 0) · `?status=`
 (repetível) · `?name=` · `?email=` · `?document_number=` ·
